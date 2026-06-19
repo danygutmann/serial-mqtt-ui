@@ -1,5 +1,6 @@
 """Shared data models for serial-mqtt-ui."""
 
+from collections import deque
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Optional
@@ -30,4 +31,4 @@ class PortState:
     config: PortConfig
     status: PortStatus = PortStatus.OFFLINE
     last_error: Optional[str] = None
-    rx_buffer: list = field(default_factory=list)
+    rx_buffer: deque[str] = field(default_factory=lambda: deque(maxlen=500))

@@ -24,6 +24,12 @@ def on_startup() -> None:
     serial_bridge.start()
 
 
+@nicegui_app.on_shutdown
+def on_shutdown() -> None:
+    logger.info("Stopping serial bridge…")
+    serial_bridge.stop()
+
+
 @ui.page("/")
 def index() -> None:
     ui_module.build()

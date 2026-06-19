@@ -12,6 +12,7 @@ from app.models import PortConfig, PortState, PortStatus
 logger = logging.getLogger(__name__)
 
 _states: dict[str, PortState] = {}
+_stop_events: dict[str, threading.Event] = {}
 
 
 def _rx_topic(port_name: str) -> str:
@@ -26,9 +27,9 @@ def _status_topic(port_name: str) -> str:
     return f"{cfg.TOPIC_PREFIX}/{port_name}/status"
 
 
-def _read_loop(state: PortState, ser: serial.Serial) -> None:
+def _read_loop(state: PortState, ser: serial.Serial, stop: threading.Event) -> None:
     """Continuously read from a serial port and publish to MQTT."""
-    while True:
+    while not stop.is_set():
         try:
             line = ser.readline().decode(errors="replace").strip()
             if line:
@@ -46,6 +47,9 @@ def _read_loop(state: PortState, ser: serial.Serial) -> None:
 def _open_port(port_cfg: PortConfig) -> None:
     state = PortState(config=port_cfg)
     _states[port_cfg.name] = state
+
+    stop = threading.Event()
+    _stop_events[port_cfg.name] = stop
 
     try:
         ser = serial.Serial(port_cfg.device, port_cfg.baudrate, timeout=1)
@@ -69,7 +73,7 @@ def _open_port(port_cfg: PortConfig) -> None:
     mqtt_bridge.subscribe(_tx_topic(port_cfg.name), _on_tx)
 
     # Start RX reader in a daemon thread
-    t = threading.Thread(target=_read_loop, args=(state, ser), daemon=True)
+    t = threading.Thread(target=_read_loop, args=(state, ser, stop), daemon=True)
     t.start()
 
 
@@ -78,6 +82,13 @@ def start() -> None:
     for port_cfg in cfg.PORTS:
         _open_port(port_cfg)
     logger.info("Serial bridge started (%d ports)", len(cfg.PORTS))
+
+
+def stop() -> None:
+    """Signal all RX threads to exit."""
+    for event in _stop_events.values():
+        event.set()
+    logger.info("Serial bridge stopped")
 
 
 def get_states() -> dict[str, PortState]:

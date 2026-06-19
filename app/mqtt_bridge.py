@@ -46,12 +46,11 @@ def _on_message(client: mqtt.Client, userdata, msg: mqtt.MQTTMessage) -> None:
     topic = msg.topic
     payload = msg.payload.decode(errors="replace")
     with _lock:
-        handlers = list(_subscribers.get(topic, []))
-        # Also check wildcard entries (simple prefix match)
+        matched_handlers: list[Callable[[str, str], None]] = []
         for pattern, hlist in _subscribers.items():
-            if "#" in pattern or "+" in pattern:
-                handlers += hlist
-    for handler in handlers:
+            if mqtt.topic_matches_sub(pattern, topic):
+                matched_handlers.extend(hlist)
+    for handler in matched_handlers:
         try:
             handler(topic, payload)
         except Exception:

@@ -121,3 +121,9 @@ A future UI panel can provide a macro tree for reusable actions:
 - **Serial port unavailable**: verify device path, container permissions, and exclusive device use.
 - **MQTT not connecting**: verify broker host/port/credentials and network reachability.
 - **No terminal data**: verify baud rate, cable/wiring, and test the port directly on host.
+
+## Security notes
+
+- The bundled `docker-compose.yml` configures Mosquitto with `allow_anonymous true` for
+  convenience during development.  For production deployments set `MQTT_USERNAME` /
+  `MQTT_PASSWORD` and enable password authentication in the broker configuration.
