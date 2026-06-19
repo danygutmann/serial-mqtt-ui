@@ -1,0 +1,40 @@
+services:
+  serial-mqtt-ui:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    devices:
+      - "/dev/ttyUSB0:/dev/ttyUSB0"
+      - "/dev/ttyUSB1:/dev/ttyUSB1"
+      - "/dev/ttyUSB2:/dev/ttyUSB2"
+    environment:
+      MQTT_HOST: broker
+      MQTT_PORT: 1883
+      # MQTT_USERNAME: ""
+      # MQTT_PASSWORD: ""
+      TOPIC_PREFIX: serial
+      SERIAL_PORT_1: /dev/ttyUSB0
+      SERIAL_PORT_2: /dev/ttyUSB1
+      SERIAL_PORT_3: /dev/ttyUSB2
+      SERIAL_BAUDRATE_1: 115200
+      SERIAL_BAUDRATE_2: 115200
+      SERIAL_BAUDRATE_3: 115200
+    depends_on:
+      - broker
+
+  broker:
+    image: eclipse-mosquitto:2
+    restart: unless-stopped
+    ports:
+      - "1883:1883"
+    volumes:
+      - mosquitto_data:/mosquitto/data
+      - mosquitto_log:/mosquitto/log
+    command: >
+      sh -c "printf 'listener 1883\nallow_anonymous true\n' > /mosquitto/config/mosquitto.conf
+             && mosquitto -c /mosquitto/config/mosquitto.conf"
+
+volumes:
+  mosquitto_data:
+  mosquitto_log:

@@ -80,26 +80,24 @@ docker run --rm -it \
 
 ## docker-compose usage (Raspberry Pi)
 
-```yaml
-services:
-  serial-mqtt-ui:
-    build: .
-    ports:
-      - "8080:8080"
-    devices:
-      - "/dev/ttyUSB0:/dev/ttyUSB0"
-      - "/dev/ttyUSB1:/dev/ttyUSB1"
-      - "/dev/ttyUSB2:/dev/ttyUSB2"
-    environment:
-      MQTT_HOST: broker
-      MQTT_PORT: 1883
+The provided `docker-compose.yml` includes both the app and a bundled
+[Eclipse Mosquitto](https://mosquitto.org/) broker so the stack is self-contained:
+
+```bash
+docker compose up --build
 ```
+
+The UI is then reachable at `http://<raspberry-pi-ip>:8080`.
+
+To use an external broker instead, remove the `broker` service and set
+`MQTT_HOST` to your broker's address.
 
 ## Intended minimal project structure
 
 ```text
 serial-mqtt-ui/
 ├── README.md
+├── .gitignore
 ├── Dockerfile
 ├── docker-compose.yml
 ├── requirements.txt
